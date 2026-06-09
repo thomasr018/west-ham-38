@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>West Ham 38-0</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  color:white;
+  min-height:100vh;
+  background:radial-gradient(circle at top,#7a003c 0%,transparent 35%),linear-gradient(135deg,#210012,#061b2e 75%);
+}
+.app{width:min(1100px,94%);margin:auto;padding:34px 0}
+.hero{text-align:center;margin-bottom:24px}
+.badge{display:inline-block;background:#7ee0ff;color:#2b0016;font-weight:900;padding:8px 14px;border-radius:999px;text-transform:lowercase}
+h1{font-size:clamp(44px,10vw,105px);margin:12px 0 0;color:#7ee0ff;text-shadow:0 8px 0 #7a003c}
+.sub{max-width:650px;margin:12px auto 22px;color:#eee;font-size:18px}
+button{
+  border:0;border-radius:999px;padding:13px 21px;font-weight:900;cursor:pointer;
+  background:#7ee0ff;color:#2b0016;box-shadow:0 7px 0 rgba(0,0,0,.25);text-transform:lowercase
+}
+button:disabled{opacity:.45;cursor:not-allowed}
+.panel{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+  border-radius:28px;padding:22px;backdrop-filter:blur(10px)
+}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.small{color:#7ee0ff;margin:0 0 5px;font-weight:bold;text-transform:lowercase}
+h2{margin:0;font-size:30px}
+.formation{background:#7a003c;padding:10px 16px;border-radius:999px;font-weight:900}
+.options{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:22px 0}
+.card{
+  background:linear-gradient(160deg,#7a003c,#0f3b5a);border:2px solid rgba(126,224,255,.35);
+  border-radius:22px;padding:18px;min-height:230px;display:flex;flex-direction:column;justify-content:space-between
+}
+.rating{font-size:52px;font-weight:1000;color:#7ee0ff;line-height:1}
+.card h3{font-size:25px;margin:8px 0 4px}
+.meta{color:#d8f7ff;margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;font-size:12px}
+.stat{background:rgba(255,255,255,.13);border-radius:10px;padding:7px;text-align:center}
+.squad-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.squad-item{background:rgba(0,0,0,.26);border-radius:14px;padding:11px}
+.actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:20px}
+.result{margin-top:22px;background:rgba(126,224,255,.12);border:1px solid rgba(126,224,255,.35);padding:18px;border-radius:18px;font-size:19px;line-height:1.5}
+.hidden{display:none}
+.footer{text-align:center;color:#c9c9c9;margin-top:18px;font-size:13px}
+@media(max-width:850px){.options,.squad-grid{grid-template-columns:1fr}.card{min-height:auto}}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="hero">
+    <span class="badge">west ham only</span>
+    <h1>Road to 38-0</h1>
+    <p class="sub">Draft a West Ham XI from different eras and simulate the season. Can your team go 38 wins from 38?</p>
+    <button id="start">start draft</button>
+  </section>
+
+  <section class="panel">
+    <div class="top">
+      <div>
+        <p class="small">current pick</p>
+        <h2 id="pick">press start</h2>
+      </div>
+      <div class="formation">4-2-3-1</div>
+    </div>
+
+    <div id="options" class="options"></div>
+
+    <h2 style="font-size:24px;margin-top:8px">your XI</h2>
+    <div id="squad" class="squad-grid"></div>
+
+    <div class="actions">
+      <button id="reroll" disabled>reroll</button>
+      <button id="sim" disabled>simulate season</button>
+      <button id="reset">reset</button>
+    </div>
+
+    <div id="result" class="result hidden"></div>
+  </section>
+
+  <p class="footer">fan made west ham draft game. ratings are made up for fun.</p>
+</main>
+
+<script>
+const positions=["GK","RB","CB","CB","LB","CDM","CM","RW","CAM","LW","ST"];
+
+const players=[
+{name:"Łukasz Fabiański",season:"2018/19",pos:"GK",rating:86,pace:40,shoot:20,pass:63,defend:84,physical:76},
+{name:"Robert Green",season:"2006/07",pos:"GK",rating:84,pace:38,shoot:18,pass:58,defend:83,physical:78},
+{name:"Alphonse Areola",season:"2023/24",pos:"GK",rating:85,pace:42,shoot:18,pass:61,defend:85,physical:80},
+
+{name:"Vladimír Coufal",season:"2020/21",pos:"RB",rating:83,pace:74,shoot:54,pass:76,defend:82,physical:82},
+{name:"Pablo Zabaleta",season:"2017/18",pos:"RB",rating:82,pace:66,shoot:58,pass:75,defend:82,physical:78},
+{name:"Aaron Wan-Bissaka",season:"2024/25",pos:"RB",rating:84,pace:78,shoot:52,pass:70,defend:88,physical:80},
+
+{name:"Winston Reid",season:"2015/16",pos:"CB",rating:84,pace:64,shoot:42,pass:62,defend:86,physical:85},
+{name:"Angelo Ogbonna",season:"2020/21",pos:"CB",rating:85,pace:62,shoot:39,pass:65,defend:87,physical:84},
+{name:"Kurt Zouma",season:"2021/22",pos:"CB",rating:83,pace:58,shoot:45,pass:62,defend:84,physical:88},
+{name:"James Collins",season:"2012/13",pos:"CB",rating:82,pace:49,shoot:38,pass:55,defend:84,physical:86},
+
+{name:"Aaron Cresswell",season:"2015/16",pos:"LB",rating:84,pace:74,shoot:67,pass:82,defend:80,physical:75},
+{name:"Emerson",season:"2023/24",pos:"LB",rating:84,pace:78,shoot:61,pass:80,defend:81,physical:76},
+
+{name:"Declan Rice",season:"2022/23",pos:"CDM",rating:91,pace:78,shoot:74,pass:86,defend:90,physical:91},
+{name:"Tomáš Souček",season:"2020/21",pos:"CDM",rating:85,pace:63,shoot:78,pass:73,defend:83,physical:90},
+{name:"Alex Song",season:"2014/15",pos:"CDM",rating:84,pace:66,shoot:65,pass:84,defend:82,physical:83},
+
+{name:"Mark Noble",season:"2015/16",pos:"CM",rating:84,pace:58,shoot:73,pass:85,defend:76,physical:78},
+{name:"Lucas Paquetá",season:"2023/24",pos:"CM",rating:88,pace:76,shoot:80,pass:88,defend:76,physical:82},
+{name:"Scott Parker",season:"2010/11",pos:"CM",rating:87,pace:70,shoot:75,pass:84,defend:86,physical:87},
+
+{name:"Jarrod Bowen",season:"2021/22",pos:"RW",rating:88,pace:84,shoot:87,pass:80,defend:62,physical:78},
+{name:"Michail Antonio",season:"2016/17",pos:"RW",rating:84,pace:86,shoot:80,pass:74,defend:66,physical:91},
+{name:"Mohammed Kudus",season:"2023/24",pos:"RW",rating:88,pace:87,shoot:84,pass:82,defend:61,physical:84},
+
+{name:"Dimitri Payet",season:"2015/16",pos:"CAM",rating:92,pace:78,shoot:88,pass:94,defend:48,physical:74},
+{name:"Joe Cole",season:"2002/03",pos:"CAM",rating:86,pace:82,shoot:80,pass:87,defend:55,physical:70},
+{name:"Manuel Lanzini",season:"2016/17",pos:"CAM",rating:85,pace:79,shoot:80,pass:86,defend:51,physical:68},
+
+{name:"Felipe Anderson",season:"2018/19",pos:"LW",rating:86,pace:88,shoot:82,pass:84,defend:49,physical:70},
+{name:"Said Benrahma",season:"2021/22",pos:"LW",rating:83,pace:81,shoot:78,pass:81,defend:44,physical:68},
+{name:"Matthew Etherington",season:"2005/06",pos:"LW",rating:82,pace:84,shoot:74,pass:80,defend:52,physical:71},
+
+{name:"Paolo Di Canio",season:"1999/00",pos:"ST",rating:90,pace:76,shoot:91,pass:85,defend:40,physical:76},
+{name:"Carlos Tevez",season:"2006/07",pos:"ST",rating:89,pace:84,shoot:88,pass:83,defend:55,physical:86},
+{name:"Andy Carroll",season:"2012/13",pos:"ST",rating:83,pace:58,shoot:82,pass:68,defend:60,physical:94},
+{name:"Teddy Sheringham",season:"2004/05",pos:"ST",rating:84,pace:45,shoot:86,pass:86,defend:42,physical:70}
+];
+
+let current=0,squad=[],currentOptions=[];
+const pick=document.getElementById("pick"),options=document.getElementById("options"),squadBox=document.getElementById("squad"),result=document.getElementById("result");
+const start=document.getElementById("start"),reroll=document.getElementById("reroll"),sim=document.getElementById("sim"),reset=document.getElementById("reset");
+
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function optionPool(){
+  const pos=positions[current],chosen=squad.map(p=>p.name);
+  return players.filter(p=>p.pos===pos&&!chosen.includes(p.name));
+}
+function showOptions(){
+  currentOptions=shuffle(optionPool()).slice(0,3);
+  options.innerHTML="";
+  currentOptions.forEach(p=>{
+    const el=document.createElement("div");
+    el.className="card";
+    el.innerHTML=`
+      <div>
+        <div class="rating">${p.rating}</div>
+        <h3>${p.name}</h3>
+        <p class="meta">${p.season} • ${p.pos}</p>
+        <div class="stats">
+          <div class="stat">PAC ${p.pace}</div><div class="stat">SHO ${p.shoot}</div><div class="stat">PAS ${p.pass}</div>
+          <div class="stat">DEF ${p.defend}</div><div class="stat">PHY ${p.physical}</div><div class="stat">OVR ${p.rating}</div>
+        </div>
+      </div>
+      <button>draft player</button>`;
+    el.querySelector("button").onclick=()=>choose(p);
+    options.appendChild(el);
+  });
+}
+function choose(p){
+  squad.push(p);current++;renderSquad();result.classList.add("hidden");
+  if(current>=positions.length){
+    pick.textContent="XI complete";options.innerHTML="";reroll.disabled=true;sim.disabled=false;return;
+  }
+  pick.textContent=positions[current]+" needed";showOptions();
+}
+function renderSquad(){
+  squadBox.innerHTML="";
+  squad.forEach((p,i)=>{
+    const d=document.createElement("div");
+    d.className="squad-item";
+    d.textContent=positions[i]+": "+p.name+" ("+p.rating+")";
+    squadBox.appendChild(d);
+  });
+}
+function simulate(){
+  const avg=squad.reduce((s,p)=>s+p.rating,0)/squad.length;
+  const attack=squad.filter(p=>["RW","CAM","LW","ST"].includes(p.pos)).reduce((s,p)=>s+p.rating,0)/4;
+  const defence=squad.filter(p=>["GK","RB","CB","LB","CDM"].includes(p.pos)).reduce((s,p)=>s+p.rating,0)/6;
+  const luck=Math.floor(Math.random()*9)-3;
+  let wins=Math.round((avg-67)+luck);
+  wins=Math.max(18,Math.min(38,wins));
+  let draws=Math.max(0,Math.round((92-avg)/2));
+  let losses=Math.max(0,38-wins-draws);
+  if(wins+draws+losses>38)losses=38-wins-draws;
+  if(wins===38){draws=0;losses=0}
+  const points=wins*3+draws;
+  const gf=Math.round(attack*1.45+wins*1.7);
+  const ga=Math.max(12,Math.round(95-defence+losses*4));
+  let verdict="solid season but not quite 38-0";
+  if(wins>=34)verdict="unreal season proper bubbles everywhere";
+  if(wins===38)verdict="38-0. greatest west ham side ever. statue outside london stadium.";
+  result.innerHTML=`<strong>${wins}W ${draws}D ${losses}L</strong><br>${points} points • ${gf} scored • ${ga} conceded<br>Team rating: ${avg.toFixed(1)}<br><em>${verdict}</em>`;
+  result.classList.remove("hidden");
+}
+function resetGame(){
+  current=0;squad=[];currentOptions=[];options.innerHTML="";squadBox.innerHTML="";pick.textContent="press start";result.classList.add("hidden");reroll.disabled=true;sim.disabled=true;
+}
+start.onclick=()=>{resetGame();pick.textContent=positions[current]+" needed";reroll.disabled=false;showOptions()}
+reroll.onclick=showOptions;
+sim.onclick=simulate;
+reset.onclick=resetGame;
+</script>
+</body>
+</html>
